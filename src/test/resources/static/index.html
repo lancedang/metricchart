@@ -1,0 +1,87 @@
+<html>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<head>
+    <script src="http://gssn.fw121.com/js/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.8.0/echarts.min.js"></script>
+</head>
+<body>
+<!-- 因为我需要生成两个图片 所以定义了两个echarts -->
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM  -->
+<div id="temEcharts" style="height:400px;width:550px"></div>
+<div id="rhEcharts" style="height:400px;width:550px"></div>
+</body>
+<script>
+    var temEcharts=null;
+    var rhEcharts=null;
+    $(function() {
+        // 基于准备好的dom，初始化echarts实例
+        temEcharts = echarts.init(document.getElementById('temEcharts'));
+        rhEcharts = echarts.init(document.getElementById('rhEcharts'));
+    });
+
+    function showImg(surfData){
+        var option ={
+            title : {text : '温度(°C)', left : 'center'},
+            xAxis: {type: 'category', data: []},
+            yAxis: {type: 'value'},
+            series: [{data: [], type: 'line', smooth: true}]
+        }
+        if(surfData.length <= 0){
+            alert("暂时没有查询到监测数据");
+            temEcharts.clear();
+            rhEcharts.clear();
+            return;
+        }else{
+            //pre24h需要的数据
+            var pre24hdata = echarts.util.map(surfData, function (entry) {
+                return entry.pre24h==undefined || entry.pre24h=='99999' ?0:entry.pre24h;
+            });
+            //温度需要的数据
+            var temdata = echarts.util.map(surfData, function (entry) {
+                return entry.tem==undefined?0:entry.tem/10;
+            });
+            //x轴需要的数据
+            var xAxisData = echarts.util.map(surfData, function (entry) {
+                return formatData(new Date(entry.dataTime), 'MM-dd');
+            });
+            option.series[0].data=temdata;
+            option.xAxis.data=xAxisData;
+            temEcharts.setOption(option);
+
+            option.series[0].data=pre24hdata;
+            option.title.text='降水(mm)';
+            option.series[0].type="bar";
+            rhEcharts.setOption(option);
+        }
+    }
+
+    function returnEchartImg(echartObj){
+        return echartObj.getDataURL();
+    }
+
+    var SIGN_REGEXP = /([yMdhsm])(\1*)/g;
+    var DEFAULT_PATTERN = 'yyyy-MM-dd';
+
+    function formatData(date, pattern) {
+        pattern = pattern || DEFAULT_PATTERN;
+        return pattern.replace(SIGN_REGEXP, function ($0) {
+            switch ($0.charAt(0)) {
+                case 'y': return padding(date.getFullYear(), $0.length);
+                case 'M': return padding(date.getMonth() + 1, $0.length);
+                case 'd': return padding(date.getDate(), $0.length);
+                case 'w': return date.getDay() + 1;
+                case 'h': return padding(date.getHours(), $0.length);
+                case 'm': return padding(date.getMinutes(), $0.length);
+                case 's': return padding(date.getSeconds(), $0.length);
+            }
+        });
+    };
+    function padding(s, len) {
+        var len = len - (s + '').length;
+        for (var i = 0; i < len; i++) { s = '0' + s; }
+        return s;
+    };
+
+</script>
+</html>

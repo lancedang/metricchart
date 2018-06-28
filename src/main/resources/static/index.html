@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!-- 引入 ECharts 文件 -->
+    <script src="http://echarts.baidu.com/examples/vendors/echarts/echarts.min.js"></script>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+
+<body>
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+<div id="main" style="width: 800px;height:400px; margin: auto;"></div>
+
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var myChart = echarts.init(document.getElementById('main'));
+
+
+    $(document).ready(function () {
+        //每隔 3 秒重新发送一次请求- 用于刷新图表
+        setInterval("startRequest()", 3000);
+        //每隔 30 秒保存一次图片
+        setInterval("sendUrlInfo()", 30000);
+    });
+
+    //请求后台数据
+    function startRequest() {
+        $.get('/cpu/option').done(function (data) {
+            // 填入数据
+            myChart.setOption($.parseJSON(data));
+        });
+    }
+
+    //返回 png base64 数据
+    function sendUrlInfo() {
+        console.log("send url info");
+        var picBase64Info = myChart.getDataURL();
+
+        var data = {
+            picInfo: picBase64Info
+        }
+
+        //$.get('/cpu/base64', data)
+
+
+
+        $.post("/cpu/base64", data);
+    }
+
+    function showImg(data) {
+        myChart.setOption(data);
+    }
+
+    function returnEchartImg(echartObj) {
+        return echartObj.getDataURL();
+    }
+
+
+</script>
+
+</body>
+
+</html>
